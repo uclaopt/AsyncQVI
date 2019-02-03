@@ -22,14 +22,16 @@ struct Params{
 	int style;         		// sample style
 	int total_num_threads;  // total number of threads
 	int algo;				// which algorithm to run
-	double time;
-	double test_time=0;
 	int save = 0;			// save final policy if 1
 	int test_max_episode = 100; // test episodes
 	int test_max_step = 200;	// how many steps to go in one test episode
 	int check_step;				// how often to check policy
+	
+	// The followings are not supposed to be hand-tuned
 	int stop=0;
 	int threshold=0;
+	double time;
+	double test_time=0;
 };
 
 // load parameters from makefile
@@ -81,6 +83,12 @@ void parse_input_argv(Params* para, int argc, char *argv[]){
 		}
 		else if (std::string(argv[i - 1]) == "-alpha") {
 			para->alpha = atof(argv[i]);
+		}
+		else if (std::string(argv[i - 1]) == "-gamma") {
+			para->gamma = atof(argv[i]);
+		}
+		else if (std::string(argv[i - 1]) == "-epsilon") {
+			para->epsilon = atof(argv[i]);
 		}
 		else if (std::string(argv[i - 1]) == "-algo") {
 			para->algo = atoi(argv[i]);

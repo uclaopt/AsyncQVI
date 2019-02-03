@@ -1,5 +1,3 @@
-	# Makefile for ASYNC-RBCD
-
 CC := g++ # This is the main compiler
 # CC := clang --analyze # and comment out the linker last line for sanity
 # directory of objective files
@@ -37,7 +35,7 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 	@echo " $(CC) $(CFLAGS) $(INC) -c -o $@ $<"; $(CC) $(CFLAGS) $(INC) -c -o $@ $<
 
 run:
-	./$(PROB) -algo 0 -nthreads 4 -alpha 0.9 -check_step 100000 -style 1 -len_state 20000 -len_action 8 -max_outer_iter 100000000 -max_inner_iter 5 -sample_num 10
+	./$(PROB) -algo 0 -nthreads 4 -check_step 100000 -style 1 -len_state 20000 -len_action 8 -max_outer_iter 10000000 -max_inner_iter 5
 ##############################################
 clean:
 	@echo " Cleaning...";
