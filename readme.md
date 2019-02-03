@@ -1,37 +1,44 @@
 # User Guide
 
-A light c++11 package for three reinforment learning algorithms under generative model:
-- AsyncQVI: [AsyncQVI: Asynchronous-Parallel Q-Value Iteration for Reinforcement Learning with Near-Optimal Sample Complexity.](https://arxiv.org/abs/1812.00885) Yibo Zeng, Fei Feng, Wotao Yin
-- AsyncQL: [Asynchronous Stochastic Approximation and Q-Learning.](http://www.mit.edu/~jnt/Papers/J052-94-jnt-q.pdf) John N. Tsitsiklis
-- VRVI:     [Variance Reduced Value Iteration and Faster Algorithms for Solving Markov Decision Process.](https://arxiv.org/abs/1710.09988) Aaron Sidford, Mengdi Wang, Xian Wu, Yinyu Ye
+This is a C++11 package for three reinforcement learning algorithms that call use a sample oracle (also known as a generative model):
+- AsyncQVI: [AsyncQVI: Asynchronous-Parallel Q-Value Iteration for Reinforcement Learning with Near-Optimal Sample Complexity.](https://arxiv.org/abs/1812.00885) by Yibo Zeng, Fei Feng, Wotao Yin
+- VRVI:    [Variance Reduced Value Iteration and Faster Algorithms for Solving Markov Decision Process.](https://arxiv.org/abs/1710.09988) by Aaron Sidford, Mengdi Wang, Xian Wu, Yinyu Ye
+- AsyncQL: [Asynchronous Stochastic Approximation and Q-Learning.](http://www.mit.edu/~jnt/Papers/J052-94-jnt-q.pdf) by John N. Tsitsiklis
 
-where the first two are implemented in asynchronous parallel fashion and the last one is single-threaded. Users should read papers for algorithm descriptions.
+The first and last algorithms (AsyncQVI and AsyncQL) are implemented in the asynchronous parallel fashion. The second one (VRVI) is single-threaded. 
 
-## Usage
-We implement parallel computing with c++11 and the <pthread.h> lib. A gcc 4.8+ compiler is required. One can either run on Linux or Windows with MinGW (http://www.math.ucla.edu/~wotaoyin/windows_coding.html). After downloading the package, redirect to where the makefile locates. To compile, insert the command
+## Install
+We implemented parallel computing in C++11 using the pthread lib and <pthread.h>. A gcc (version 4.8+) compiler is required. 
+
+This package can be compiled on either Linux or Windows. On Windows, one can use MinGW and follow the instructions in  http://www.math.ucla.edu/~wotaoyin/windows_coding.html. 
+
+To compile, run the command
 
     make
 
-To execute with certain input parameters (see makefile, Line 38), insert the command
+## Usage
+
+To run a demo, call
 
     make run
 
-In the current makefile example, we test with parameters
+It runs an executable with the following  parameters, specified on Line 38 of makefile,
 
     -algo 0 -nthreads 4 -check_step 100000 -style 1 -len_state 20000 -len_action 8 -max_outer_iter 10000000 -max_inner_iter 5
 
-which represents solving a sailing problem (our test example) with 20000 states and 8 actions using AsyncQVI (-algo 0) with 4 threads ( -nthreads 4), globally cyclic sampling (-style 1), and 5 samples per approximation (-max_inner_iter 5) for at most 1000000 global iterations (-max_outer_iter 1000000). Read below for more details about parameter settings.
+The demo solves the sailing reinforcement learning problem with 20000 states and 8 actions using AsyncQVI (-algo 0) with 4 parallel threads (-nthreads 4), globally cyclic sampling (-style 1), and 5 samples per approximation (-max_inner_iter 5) for maximally 1000000 iterations (-max_outer_iter 1000000). 
+
+You can change these parameters and also try the other two algorithms. The supported parameter settings are given below.
 
 ## Parameter Settings
-There are 15 parameters that can be tuned. Users can set values either in util.h -> struct Params (recompile after modification) or in makefile (Line 38) with 
+There are 15 parameters. Users can set their values either in util.h -> struct Params (then you must recompile after each modification), or modify Line 38 of makefile, or use command-line options like
 
     -abc xyz 
-In the example makefile, we did not list all parameters. Feel free to add by your needs. 
 
-The parameter dictionary for three algorithms are listed below:
+The supported parameter settings are given below.
 
 ### Common for all three algorithms ###
-Name | Meaning
+Name | Description
 -----|--------
 params.len_state| dimension of state space
 params.len_action| dimension of action space
@@ -46,27 +53,30 @@ params.test_max_step | number of steps to go in one test episode
 
 
 ### AsyncQVI specific ###
-  Paper | Code
+  Name       | Field
+  (in paper) | (in code)
   ------|------
   L     | params.max_outer_iter
   K     | params.max_inner_iter
   epsilon | params.epsilon
   
 ### AsyncQL specific ###
-  Paper | Code
+  Paper | Field
+  (in paper) | (in code)
   ------|------
-  alpha(learning rate) | params.alpha
+  alpha (learning rate) | params.alpha
   maximal iterations | params.max_outer_iter
 
 To use adaptive learning rate, one should tune by modifying algo.h, Line 135. 
 To use constant learning rate, one can comment Line 135 and tune in makefile (-alpha) without recompiling.
 
 ### VRVI specific ###
-  Paper | Code
+  Paper | Field
+  (in paper) | (in code)
   ------|------
   m | params.sample_num
   L | params.max_inner_iter
   K | params.max_outer_iter
   
 ## Sample Oracle
-A sample oracle should be defined separately as a class structure in one header file and included by algo.h to have the algorithms take samples. For instance, we built one sample oracle, a sailing problem, in oracle.h for testing. Users can follow the same structure.
+All the three algorithms call an oracle that takes samples. Therefore, a sample oracle (as a class structure) must be defined in a header file and included in algo.h. For the sailing problem, we built a sample oracle in oracle.h. The user can use it as a template to run the three algorithms with their own sample oracles.
