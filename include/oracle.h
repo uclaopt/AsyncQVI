@@ -79,7 +79,7 @@ class Sailing{
 			if(prob < 0.05){
 				x = max(0, min(x + (int)normalDouble(0.,10.), DIMX-1));
 				y = max(0, min(y + (int)normalDouble(0.,10.), DIMY-1));
-			}	
+			}
 		}
 		
 		// instant reward

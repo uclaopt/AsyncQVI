@@ -39,6 +39,8 @@ void asyncQVI(int thread_id, QVI qvi, Params* params) {
 // asynchronous running with multiole Qlearning objects
 void asyncQL(int thread_id, Qlearning ql, Params* params) {
 	
+	ql.randGenerator(thread_id);
+	
 	while(!params->stop){
 		ql.update(iter);
 		iter++;

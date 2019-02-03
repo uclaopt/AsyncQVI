@@ -105,13 +105,17 @@ class Qlearning {
 			s.setValues(params);			
 		}
 		
+		void randGenerator(int thread_id){
+			srand (time(NULL)+thread_id);
+		}
+		
 		// update global variables
 		void update(int iter){
 			
 			// select (state, action) uniformly random
 			if(params->style == 0){
 				init_state = uniformInt(0, params->len_state-1); 
-				init_action = uniformInt(0, params->len_action-1); 
+				init_action = uniformInt(0, params->len_action-1);
 			}
 			// select (state, action) globally cyclic 
 			else if(params->style == 1){
@@ -178,6 +182,7 @@ class VRVI{
 		}
 	
 		void solve(){
+			srand (time(NULL));
 			for(int t = 0; t < params->max_outer_iter; t++){
 				
 				// approximate x
