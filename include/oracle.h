@@ -37,8 +37,8 @@ class Sailing{
 		void setValues(Params* params){
 			DIMX = (int)sqrt(params->len_state/DIMWIND);
 			DIMY = DIMX;
-			GOALX = DIMX-1;
-			GOALY = DIMY-1;
+			GOALX = (int)DIMX/2;
+			GOALY = GOALX;
 		}
 		
 		// map the ith state to position and wind
