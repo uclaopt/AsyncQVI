@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <stdlib.h>
+#include <time.h>
 #include "oracle.h"
 using namespace std;
 extern pthread_mutex_t writelock;
@@ -17,6 +18,8 @@ class QVI{
 		double r;
 		double S;
 		Sailing s;
+		
+		
 	
 	public:  // global variables
 		std::vector<double>* V;
@@ -33,13 +36,17 @@ class QVI{
 			s.setValues(params);
 		}
 		
+		void randGenerator(int thread_id){
+			srand (time(NULL)+thread_id);
+		}
+		
 		// update global variables
 		void update(int iter){
 			
 			// select (state, action) uniformly random
 			if(params->style == 0){
-				init_state = randint(0, params->len_state-1);
-				init_action = randint(0, params->len_action-1);
+				init_state = uniformInt(0, params->len_state-1);
+				init_action = uniformInt(0, params->len_action-1);
 			}
 			// select (state, action) globally cyclic
 			else{
@@ -103,8 +110,8 @@ class Qlearning {
 			
 			// select (state, action) uniformly random
 			if(params->style == 0){
-				init_state = randint(0, params->len_state-1); 
-				init_action = randint(0, params->len_action-1); 
+				init_state = uniformInt(0, params->len_state-1); 
+				init_action = uniformInt(0, params->len_action-1); 
 			}
 			// select (state, action) globally cyclic 
 			else if(params->style == 1){
@@ -115,8 +122,8 @@ class Qlearning {
 			else{
 				init_state = next_state;
 				init_action = (*pi)[next_state];
-				if(randdouble(0.,1.) < params->epsilon)
-					init_action = randint(0, params->len_action-1);
+				if(uniformDouble(0.,1.) < params->epsilon)
+					init_action = uniformInt(0, params->len_action-1);
 			}
 			
 			// call sample oracle

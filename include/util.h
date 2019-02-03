@@ -7,6 +7,8 @@
 #include <random>
 #include "util.h"
 using namespace std;
+extern std::default_random_engine generator;
+extern std::mt19937 rng; 
 
 struct Params{
 	int max_outer_iter;
@@ -29,33 +31,6 @@ struct Params{
 	int stop=0;
 	int threshold=0;
 };
-
-// generate a uniformly random integer in [start, end]
-// this function might get error on Windows
-int randint(int start, int end){
-	std::random_device rd;     // only used once to initialise (seed) engine
-	std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
-	std::uniform_int_distribution<int> uni(start, end); // guaranteed unbiased
-	return uni(rng);
-}
-
-// generate a uniformly random double in (start, end)
-// this function might get error on Windows 
-double randdouble(double start, double end){
-	std::random_device rd;     
-	std::mt19937 rng(rd());    
-	std::uniform_real_distribution<double> unif(0,1);
-	return start + unif(rng)*(end-start);
-}
-
-// generate a normally distributed double with mean and variance
-// this function might get error on Windows 
-double normaldouble(double mean, double var){
-	std::random_device rd;     
-	std::mt19937 rng(rd());   
-	std::normal_distribution<double> normal(mean, var);
-	return normal(rng);
-}
 
 // load parameters from makefile
 void parse_input_argv(Params* para, int argc, char *argv[]){
@@ -149,6 +124,19 @@ double get_cpu_time(){
     return 0;
   }
 }
+// generate a uniformly random integer in [start, end]
+int uniformInt(int start, int end){
+	return start + rand() % (end-start+1);
+}
+// generate a uniformly distributed double in (start, end)
+double uniformDouble(double start, double end){
+	return start + ((double) rand() / (RAND_MAX))*(end-start);
+}
+// generate a normally distributed double with mean and variance
+double normalDouble(double mean, double var){
+	std::normal_distribution<double> distribution(mean, var);
+	return distribution(generator);
+}
 
 //  Posix/Linux
 #else
@@ -165,6 +153,25 @@ double get_wall_time(){
 double get_cpu_time(){
   return (double)clock() / CLOCKS_PER_SEC;
 }
+
+// generate a uniformly random integer in [start, end]
+int uniformInt(int start, int end){
+	std::uniform_int_distribution<int> uni(start, end); // guaranteed unbiased
+	return uni(rng);
+}
+
+// generate a uniformly random double in (start, end)
+double uniformDouble(double start, double end){
+	std::uniform_real_distribution<double> unif(0,1);
+	return start + unif(rng)*(end-start);
+}
+
+// generate a normally distributed double with mean and variance
+double normalDouble(double mean, double var){ 
+	std::normal_distribution<double> normal(mean, var);
+	return normal(rng);
+}
+
 #endif
 		
 #endif

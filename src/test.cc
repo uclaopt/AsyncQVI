@@ -8,12 +8,20 @@
 #include "async.h"
 #include "algo.h"
 #include "oracle.h"
+#include <time.h>
 using namespace std;
 
 std::atomic<int> iter(1);    // global iteration counter
 pthread_mutex_t writelock;   // writing lock
 pthread_barrier_t barrier;   // sync barrier
 pthread_barrierattr_t attr;
+
+// random number generator on Windows
+std::default_random_engine generator;
+// random number generator on Linux
+std::random_device rd;     
+std::mt19937 rng(rd()); 
+
 int main(int argc, char** argv){
 	
 	/* Step 0: load parameters from makefile.(defined in util.h) */

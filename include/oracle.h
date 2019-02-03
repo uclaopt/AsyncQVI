@@ -75,10 +75,10 @@ class Sailing{
 			y = max(0, min(y + dir.second, DIMY-1));
 			
 			// some noise in positioning
-			double prob = randdouble(0,1);
+			double prob = uniformDouble(0,1);
 			if(prob < 0.05){
-				x = max(0, min(x + (int)normaldouble(0.,10.), DIMX-1));
-				y = max(0, min(y + (int)normaldouble(0.,10.), DIMY-1));
+				x = max(0, min(x + (int)normalDouble(0.,10.), DIMX-1));
+				y = max(0, min(y + (int)normalDouble(0.,10.), DIMY-1));
 			}	
 		}
 		
@@ -97,7 +97,7 @@ class Sailing{
 		}
 		
 		void windTransition(){
-			double prob = randdouble(0, 1);
+			double prob = uniformDouble(0, 1);
 			double start = 0;
 			for(int nwind = 0; nwind < DIMWIND; nwind++){
 				start += wind_transition[wind][nwind];
@@ -132,7 +132,7 @@ void test_sailing(Sailing& s, std::vector<int>* pi, Params* params){
 	// run text_max_episode episodes
 	for (int episode = 0; episode < params->test_max_episode; episode++){
 		// start from an arbitrary state
-		int i = randint(0,params->len_state-1);
+		int i = uniformInt(0,params->len_state-1);
 		int j = 0;
 		double r = 0;
 		isflag = 0;

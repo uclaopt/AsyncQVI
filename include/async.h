@@ -13,6 +13,8 @@ extern pthread_barrier_t barrier;
 // asynchronous running with multiple QVI objects 
 void asyncQVI(int thread_id, QVI qvi, Params* params) {
 	
+	qvi.randGenerator(thread_id);
+	
 	while(!params->stop){
 		qvi.update(iter);
 		iter++;
