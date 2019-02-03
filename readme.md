@@ -53,16 +53,14 @@ params.test_max_step | number of steps to go in one test episode
 
 
 ### AsyncQVI specific ###
-  Name       | Field
-  (in paper) | (in code)
+  Name (in paper) | Field (in code)
   ------|------
   L     | params.max_outer_iter
   K     | params.max_inner_iter
   epsilon | params.epsilon
   
 ### AsyncQL specific ###
-  Paper | Field
-  (in paper) | (in code)
+  Name (in paper) | Field (in code)
   ------|------
   alpha (learning rate) | params.alpha
   maximal iterations | params.max_outer_iter
@@ -71,8 +69,7 @@ To use adaptive learning rate, one should tune by modifying algo.h, Line 135.
 To use constant learning rate, one can comment Line 135 and tune in makefile (-alpha) without recompiling.
 
 ### VRVI specific ###
-  Paper | Field
-  (in paper) | (in code)
+  Name (in paper) | Field (in code)
   ------|------
   m | params.sample_num
   L | params.max_inner_iter
