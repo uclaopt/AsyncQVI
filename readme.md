@@ -65,7 +65,7 @@ params.test_max_step | number of steps to go in one test episode
   alpha (learning rate) | params.alpha
   maximal iterations | params.max_outer_iter
 
-To use adaptive learning rate, one should tune by modifying algo.h, Line 135. 
+To use adaptive learning rate, one should tune by modifying algo.h, Line 139. 
 To use constant learning rate, one can comment Line 135 and tune in makefile (-alpha) without recompiling.
 
 ### VRVI specific ###
