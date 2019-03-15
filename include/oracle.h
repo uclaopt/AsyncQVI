@@ -5,21 +5,27 @@
 #include <iomanip>
 #include <string>
 #include <math.h>
+#include <random>
 #include "util.h"
 #define DIMWIND 8
-using namespace std;
+using namespace std; 
 
 // sample orable for sailing problem
 class Sailing{
     
 	private:
-		int x; // x coordinate of current position
-		int y; // y coordinate of current position
-		int wind; // current wind direction
-		int DIMX; // range of x
-		int DIMY; // range of y
-		int GOALX;// x coordinate of Goal state
-		int GOALY;// y coordinate of Goal state
+		int x; 					// x coordinate of current position
+		int y; 					// y coordinate of current position
+		int wind; 				// current wind direction
+		int DIMX; 				// range of x
+		int DIMY; 				// range of y
+		int GOALX;				// x coordinate of Goal state
+		int GOALY;				// y coordinate of Goal state
+		double probs; 			// probability of being trapped in vortex
+		double d;               // reward scale parameter
+		
+		// local random generator, faster for parallel computing
+		std::mt19937 local_rng; 
 		
 		// transition matrix for wind direction
 		float wind_transition[DIMWIND][DIMWIND] = {
@@ -34,12 +40,28 @@ class Sailing{
 		};
 	
 	public:
+		
 		void setValues(Params* params){
 			DIMX = (int)sqrt(params->len_state/DIMWIND);
 			DIMY = DIMX;
-			GOALX = (int)DIMX/2;
+			GOALX = (int)DIMX/2; // the target place is the center of the grid
 			GOALY = GOALX;
+			probs = params->probs;
+			d = params->d;
+			std::random_device rd; 
+			local_rng.seed(rd());
 		}
+		
+		double localNormalDouble(double mean, double sd){ 
+			std::normal_distribution<double> normal(mean, sd);
+			return normal(local_rng);
+		}
+		
+		double localUniformDouble(double start, double end){
+			std::uniform_real_distribution<double> unif(start, end);
+			return unif(local_rng);
+		}
+		
 		
 		// map the ith state to position and wind
 		void indexToState(int index){
@@ -75,10 +97,14 @@ class Sailing{
 			y = max(0, min(y + dir.second, DIMY-1));
 			
 			// some noise in positioning
-			double prob = uniformDouble(0,1);
-			if(prob < 0.05){
-				x = max(0, min(x + (int)normalDouble(0.,10.), DIMX-1));
-				y = max(0, min(y + (int)normalDouble(0.,10.), DIMY-1));
+			// simulate wind
+			x = max(0, min(x + (int)localNormalDouble(0.,0.1), DIMX-1));
+			y = max(0, min(y + (int)localNormalDouble(0.,0.1), DIMY-1));
+
+			// simulate vortex
+			if(localUniformDouble(0,1) < probs){
+				x = max(0, min(x + (int)localNormalDouble(0.,1.), DIMX-1));
+				y = max(0, min(y + (int)localNormalDouble(0.,1.), DIMY-1));
 			}
 		}
 		
@@ -90,14 +116,14 @@ class Sailing{
 			else if(x==0 & y==0)
 				return 0.;
 			else{	
-				int d = abs(a - wind);
-				d = d < 8 - d ? d : 8 - d;
-				return d * 0.05;
+				int angle = abs(a - wind);
+				angle = angle < 8 - angle ? angle : 8 - angle;
+				return angle * d;
 			}
 		}
 		
 		void windTransition(){
-			double prob = uniformDouble(0, 1);
+			double prob = localUniformDouble(0, 1);
 			double start = 0;
 			for(int nwind = 0; nwind < DIMWIND; nwind++){
 				start += wind_transition[wind][nwind];
@@ -106,7 +132,7 @@ class Sailing{
 					break;
 				}
 			}
-		}
+		}		
 		
 		// sample oracle function: given init_state[i], init_action[a], rewrite next_state[j] and reward[r]
 		void SO(int i, int a, int& j, double& r){
@@ -118,6 +144,7 @@ class Sailing{
 		}
 		
 };
+
 
 // policy evaluation
 void test_sailing(Sailing& s, std::vector<int>* pi, Params* params){

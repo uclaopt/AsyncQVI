@@ -7,31 +7,39 @@
 #include <random>
 #include "util.h"
 using namespace std;
-extern std::default_random_engine generator;
-extern std::mt19937 rng; 
+
+extern std::mt19937 global_rng; 
 
 struct Params{
-	int max_outer_iter;
-	int max_inner_iter;
-	int sample_num;			
-	double gamma = 0.99;	// discounted factor
-	double epsilon = 0.3;	// Q-learning exploration parameter
-	double alpha;           // Q-learning learning rate
-	int len_state;			// dimension of state space
-	int len_action;			// dimension of action space
-	int style;         		// sample style
-	int total_num_threads;  // total number of threads
-	int algo;				// which algorithm to run
-	int save = 0;			// save final policy if 1
+	/* sample oracle hyperparameters */
+	int len_state;				// dimension of state space
+	int len_action;				// dimension of action space
+	double probs = 0.;  		// probability of being trapped in vortex in sailing problem
+	double d = 0.05;            // reward scale
+	double gamma = 0.99;		// discounted factor
 	int test_max_episode = 100; // test episodes
 	int test_max_step = 200;	// how many steps to go in one test episode
-	int check_step;				// how often to check policy
 	
-	// The followings are not supposed to be hand-tuned
-	int stop=0;
-	int threshold=0;
+	/* algorithms hyperparameters */
+	int algo;					// which algorithm to run
+	int style;         			// sample style: 0 uniform, 1 cyclic, 2 markovian
+	int total_num_threads = 1;  // total number of threads
+	int max_outer_iter = 1;
+	int max_inner_iter = 1;
+	int sample_num_1 = 1;
+	int sample_num_2 = 1;
+	double explore = 0.3;		// QL exploration rate in Markovian sampling
+	double alpha = 1.;          // QL learning rate
+	double alpha1 = 0.;         // \alpha_1 in Alg.1, VRQVI
+	double epsilon = 0.;        // monotonic parameter of QVI and VRVI
+	int save = 0;				// save final policy if 1
+	int check_step;			    // how often to check policy
+	
+	/* fixed setting */
+	int stop = 0;
+	int threshold = 0;
 	double time;
-	double test_time=0;
+	double test_time = 0;
 };
 
 // load parameters from makefile
@@ -57,6 +65,12 @@ void parse_input_argv(Params* para, int argc, char *argv[]){
 		else if (std::string(argv[i - 1]) == "-len_action") {
 			para->len_action = atoi(argv[i]);
 		}
+		else if (std::string(argv[i - 1]) == "-probs") {
+			para->probs = atof(argv[i]);
+		}
+		else if (std::string(argv[i - 1]) == "-d") {
+			para->d = atof(argv[i]);
+		}
 		else if (std::string(argv[i - 1]) == "-max_outer_iter") {
 			para->max_outer_iter = atoi(argv[i]);
 		}
@@ -69,8 +83,11 @@ void parse_input_argv(Params* para, int argc, char *argv[]){
 		else if (std::string(argv[i - 1]) == "-test_max_step") {
 			para->test_max_step = atoi(argv[i]);
 		}
-		else if (std::string(argv[i - 1]) == "-sample_num") {
-			para->sample_num = atoi(argv[i]);
+		else if (std::string(argv[i - 1]) == "-sample_num_1") {
+			para->sample_num_1 = atoi(argv[i]);
+		}
+		else if (std::string(argv[i - 1]) == "-sample_num_2") {
+			para->sample_num_2 = atoi(argv[i]);
 		}
 		else if (std::string(argv[i - 1]) == "-check_step") {
 			para->check_step = atoi(argv[i]);
@@ -83,6 +100,12 @@ void parse_input_argv(Params* para, int argc, char *argv[]){
 		}
 		else if (std::string(argv[i - 1]) == "-alpha") {
 			para->alpha = atof(argv[i]);
+		}
+		else if (std::string(argv[i - 1]) == "-alpha1") {
+			para->alpha1 = atof(argv[i]);
+		}
+		else if (std::string(argv[i - 1]) == "-explore") {
+			para->explore = atof(argv[i]);
 		}
 		else if (std::string(argv[i - 1]) == "-gamma") {
 			para->gamma = atof(argv[i]);
@@ -103,6 +126,25 @@ void parse_input_argv(Params* para, int argc, char *argv[]){
 	}
 	return;
 }
+
+// generate a uniformly random integer in [start, end]
+int uniformInt(int start, int end){
+	std::uniform_int_distribution<int> uni(start, end); // guaranteed unbiased
+	return uni(global_rng);
+}
+
+// generate a uniformly random double in (start, end)
+double uniformDouble(double start, double end){ 
+	std::uniform_real_distribution<double> unif(start,end);
+	return unif(global_rng);
+}
+
+// generate a normally distributed double with mean and standard deviation
+double normalDouble(double mean, double sd){ 
+	std::normal_distribution<double> normal(mean, sd);
+	return normal(global_rng);
+}
+
 
 //  Windows
 #ifdef _WIN32
@@ -132,19 +174,6 @@ double get_cpu_time(){
     return 0;
   }
 }
-// generate a uniformly random integer in [start, end]
-int uniformInt(int start, int end){
-	return start + rand() % (end-start+1);
-}
-// generate a uniformly distributed double in (start, end)
-double uniformDouble(double start, double end){
-	return start + ((double) rand() / (RAND_MAX))*(end-start);
-}
-// generate a normally distributed double with mean and variance
-double normalDouble(double mean, double var){
-	std::normal_distribution<double> distribution(mean, var);
-	return distribution(generator);
-}
 
 //  Posix/Linux
 #else
@@ -161,25 +190,6 @@ double get_wall_time(){
 double get_cpu_time(){
   return (double)clock() / CLOCKS_PER_SEC;
 }
-
-// generate a uniformly random integer in [start, end]
-int uniformInt(int start, int end){
-	std::uniform_int_distribution<int> uni(start, end); // guaranteed unbiased
-	return uni(rng);
-}
-
-// generate a uniformly random double in (start, end)
-double uniformDouble(double start, double end){
-	std::uniform_real_distribution<double> unif(0,1);
-	return start + unif(rng)*(end-start);
-}
-
-// generate a normally distributed double with mean and variance
-double normalDouble(double mean, double var){ 
-	std::normal_distribution<double> normal(mean, var);
-	return normal(rng);
-}
-
 #endif
 		
 #endif
